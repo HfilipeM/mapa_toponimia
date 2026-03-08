@@ -151,6 +151,10 @@ function carregarKML(url) {
                 // Estilo das linhas
                 let line = L.polyline(coordsParaMapa, { color: "blue", weight: 8, opacity: 0.6 }).addTo(minhasRuas);
 
+                // Guarda os pontos no próprio objeto line para evitar problemas de closure
+                line.pontosArray = pontosArray;
+                line.nomeRua = nome;
+
                 // EVENTO MOUSEOVER - Mostra popup temporário
                 line.on("mouseover", function (e) {
                     // Se havia uma linha clicada e não é esta, reseta a anterior
@@ -162,7 +166,7 @@ function carregarKML(url) {
                     // Aplica o estilo amarelo e mostra popup
                     this.setStyle({ color: "yellow", weight: 8, opacity: 0.6 });
                     
-                    let container = criarConteudoPopup(nome, pontosArray);
+                    let container = criarConteudoPopup(this.nomeRua, this.pontosArray);
                     popupFlutuante.setLatLng(e.latlng).setContent(container).openOn(map);
                 });
 
@@ -189,7 +193,7 @@ function carregarKML(url) {
                     this.setStyle({ color: "yellow", weight: 8, opacity: 0.6 });
                     
                     // Mostra o popup fixo
-                    let container = criarConteudoPopup(nome, pontosArray);
+                    let container = criarConteudoPopup(this.nomeRua, this.pontosArray);
                     popupFlutuante.setLatLng(e.latlng).setContent(container).openOn(map);
                 });
 
@@ -216,27 +220,26 @@ var fuse = null;
 function inicializarPesquisa() {
     const options = {
         keys: ['name'],
-        threshold: 0.5, // Mais permissivo para aceitar erros ortográficos
+        threshold: 0.4, // Equilíbrio entre precisão e flexibilidade
         distance: 100,
         ignoreLocation: true,
         useExtendedSearch: false,
         includeScore: true,
-        minMatchCharLength: 3 // Mínimo 3 caracteres
+        minMatchCharLength: 2, // Aceita a partir de 2 caracteres
+        shouldSort: true // Ordena por relevância
     };
     
     const ruasArray = Object.keys(ruas).map(nome => ({ name: nome }));
     fuse = new Fuse(ruasArray, options);
 }
 
-// Função para normalizar texto (remove acentos, pontuação, palavras comuns)
+// Função para normalizar texto (remove acentos e pontuação)
 function normalizar(texto) {
     return texto
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") // Remove pontuação
-        .replace(/\b(rua|travessa|avenida|av|trav|r|largo|praca|beco|alameda|calcada|estrada|caminho|quinta|parque)\b/gi, "") // Remove palavras comuns
-        .replace(/\b(da|de|do|dos|das|e|a|o)\b/gi, "") // Remove artigos e preposições
+        .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ") // Substitui pontuação por espaço
         .replace(/\s+/g, " ") // Normaliza espaços
         .trim();
 }
@@ -263,22 +266,13 @@ searchInput.addEventListener("input", function () {
     // Pesquisa fuzzy
     const allResults = fuse.search(texto);
     
-    // Filtrar resultados por score
-    // Score mais baixo = melhor match (0 = perfeito, 1 = péssimo)
-    const excellentResults = allResults.filter(r => r.score < 0.3); // Match quase perfeito
-    const goodResults = allResults.filter(r => r.score < 0.5); // Match bom (aceita erros)
+    // Filtrar resultados por score de forma mais permissiva
+    // Para pesquisas curtas (< 5 chars), ser mais permissivo
+    const maxScore = texto.length < 5 ? 0.5 : 0.4;
+    const goodResults = allResults.filter(r => r.score < maxScore);
     
-    let results;
-    if (excellentResults.length > 0) {
-        // Se houver matches excelentes, priorizar esses
-        results = excellentResults.slice(0, 4);
-    } else if (goodResults.length > 0) {
-        // Aceita matches com erros ortográficos (máx 4)
-        results = goodResults.slice(0, 4);
-    } else {
-        // Se não houver nenhum razoável, não mostrar
-        results = [];
-    }
+    // Limitar a 4 melhores resultados
+    let results = goodResults.slice(0, 4);
     
     if (results.length > 0) {
         suggestionsMenu.style.display = "block";
