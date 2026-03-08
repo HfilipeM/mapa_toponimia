@@ -26,11 +26,19 @@ var map = L.map('map', {
 });
 
 // Fechar popup quando clica no mapa (fora de qualquer rua)
-map.on('click', function() {
+map.on('click', function () {
+
+    setVisible(suggestionsMenu, false);
+
+    if (searchInput.value === "") {
+        searchContainer.classList.remove("expanded");
+    }
+
     if (linhaClicada) {
         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
         linhaClicada = null;
     }
+
     map.closePopup();
 });
 
@@ -52,26 +60,44 @@ const searchInput = document.getElementById("search");
 const clearBtn = document.getElementById("clear-search");
 const suggestionsMenu = document.getElementById("suggestions");
 
+// utility to toggle visibility via CSS class
+function setVisible(el, visible) {
+    el.classList.toggle('visible', !!visible);
+}
+
+
 // Popup único para o mapa todo
-var popupFlutuante = L.popup({ 
-    closeButton: false, 
-    className: 'popup-container', 
+var popupFlutuante = L.popup({
+    closeButton: false,
+    className: 'popup-container',
     offset: [0, -10],
     autoPan: false // Desativa movimento automático do mapa
 });
 
 // Expandir searchbox ao clicar na lupa
 searchButton.addEventListener("click", function() {
+
     searchContainer.classList.add("expanded");
     searchInput.focus();
-});
 
+    // se já houver texto, mostrar o X
+    if (searchInput.value.trim() !== "") {
+        setVisible(clearBtn, true);
+    }
+
+});
 // Colapsar searchbox quando perde o foco (se estiver vazia)
-searchInput.addEventListener("blur", function() {
+searchInput.addEventListener("blur", function () {
     setTimeout(() => {
         if (searchInput.value === "" && !suggestionsMenu.querySelector(".suggestion-item:hover")) {
             searchContainer.classList.remove("expanded");
-            suggestionsMenu.style.display = "none";
+            setVisible(clearBtn,false);
+            searchContainer.classList.remove("has-content");
+            setVisible(suggestionsMenu, false);
+        } else if (searchInput.value !== "") {
+            // Se tiver conteúdo, adiciona classe has-content
+            searchContainer.classList.remove("expanded");
+            searchContainer.classList.add("has-content");
         }
     }, 200);
 });
@@ -86,43 +112,43 @@ function criarConteudoPopup(nome, pontosArray) {
     btn.className = "btn-copiar";
 
     // Prevenir eventos de toque no botão de propagarem
-    btn.addEventListener('touchstart', function(e) {
+    btn.addEventListener('touchstart', function (e) {
         e.stopPropagation();
     });
 
-    btn.addEventListener('touchend', function(e) {
+    btn.addEventListener('touchend', function (e) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         let indiceMeio = Math.floor(pontosArray.length / 2);
         let p = pontosArray[indiceMeio].split(",");
         let coord = p[1] + "," + p[0];
-        
+
         copiarCoordenadas(coord);
     });
 
     btn.onclick = function (event) {
         event.preventDefault();
         event.stopPropagation();
-        
+
         let indiceMeio = Math.floor(pontosArray.length / 2);
         let p = pontosArray[indiceMeio].split(",");
         let coord = p[1] + "," + p[0];
-        
+
         copiarCoordenadas(coord);
     };
 
     container.appendChild(btn);
-    
+
     // Prevenir que cliques no container fechem o popup
-    container.addEventListener('click', function(e) {
+    container.addEventListener('click', function (e) {
         e.stopPropagation();
     });
-    
-    container.addEventListener('touchstart', function(e) {
+
+    container.addEventListener('touchstart', function (e) {
         e.stopPropagation();
     });
-    
+
     return container;
 }
 
@@ -192,16 +218,16 @@ function carregarKML(url) {
                 line.on("mouseover", function (e) {
                     // Ignora mouseover se for touch
                     if (this.touchInProgress) return;
-                    
+
                     // Se havia uma linha clicada e não é esta, reseta a anterior
                     if (linhaClicada && linhaClicada !== this) {
                         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
                         linhaClicada = null;
                     }
-                    
+
                     // Aplica o estilo amarelo e mostra popup
                     this.setStyle({ color: "yellow", weight: 8, opacity: 0.6 });
-                    
+
                     let container = criarConteudoPopup(this.nomeRua, this.pontosArray);
                     popupFlutuante.setLatLng(e.latlng).setContent(container).openOn(map);
                 });
@@ -210,7 +236,7 @@ function carregarKML(url) {
                 line.on("mouseout", function (e) {
                     // Ignora mouseout se for touch ou se a linha está clicada
                     if (this.touchInProgress || this === linhaClicada) return;
-                    
+
                     this.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
                     map.closePopup();
                 });
@@ -218,20 +244,20 @@ function carregarKML(url) {
                 // EVENTO CLICK/TAP - Fixa o popup
                 line.on("click", function (e) {
                     L.DomEvent.stopPropagation(e);
-                    
+
                     // Marca como touch em progresso
                     this.touchInProgress = true;
                     setTimeout(() => { this.touchInProgress = false; }, 500);
-                    
+
                     // Se havia outra linha clicada, volta ao normal
                     if (linhaClicada && linhaClicada !== this) {
                         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
                     }
-                    
+
                     // Define esta como a linha clicada
                     linhaClicada = this;
                     this.setStyle({ color: "yellow", weight: 8, opacity: 0.6 });
-                    
+
                     // Mostra o popup fixo
                     let container = criarConteudoPopup(this.nomeRua, this.pontosArray);
                     popupFlutuante.setLatLng(e.latlng).setContent(container).openOn(map);
@@ -268,7 +294,7 @@ function inicializarPesquisa() {
         minMatchCharLength: 2, // Aceita a partir de 2 caracteres
         shouldSort: true // Ordena por relevância
     };
-    
+
     const ruasArray = Object.keys(ruas).map(nome => ({ name: nome }));
     fuse = new Fuse(ruasArray, options);
 }
@@ -288,34 +314,34 @@ searchInput.addEventListener("input", function () {
     let textoOriginal = this.value;
     let texto = normalizar(textoOriginal);
     suggestionsMenu.innerHTML = "";
-    
+
     if (textoOriginal === "") {
-        clearBtn.style.display = "none";
-        suggestionsMenu.style.display = "none";
+        setVisible(clearBtn, false);
+        setVisible(suggestionsMenu, false);
         resetMap();
         return;
     }
-    
-    clearBtn.style.display = "block";
-    
+
+    setVisible(clearBtn, true);
+
     // Se Fuse ainda não foi inicializado, aguarda
     if (!fuse) {
         return;
     }
-    
+
     // Pesquisa fuzzy
     const allResults = fuse.search(texto);
-    
+
     // Filtrar resultados por score de forma mais permissiva
     // Para pesquisas curtas (< 5 chars), ser mais permissivo
     const maxScore = texto.length < 5 ? 0.5 : 0.4;
     const goodResults = allResults.filter(r => r.score < maxScore);
-    
+
     // Limitar a 4 melhores resultados
     let results = goodResults.slice(0, 4);
-    
+
     if (results.length > 0) {
-        suggestionsMenu.style.display = "block";
+        setVisible(suggestionsMenu, true);
         results.forEach(result => {
             let nome = result.item.name;
             let div = document.createElement("div");
@@ -325,28 +351,28 @@ searchInput.addEventListener("input", function () {
             suggestionsMenu.appendChild(div);
         });
     } else {
-        suggestionsMenu.style.display = "none";
+        setVisible(suggestionsMenu, false);
     }
 });
 
 function selecionarRua(nome) {
     searchInput.value = nome;
-    suggestionsMenu.style.display = "none";
-    
+    setVisible(suggestionsMenu, false);
+
     // Fecha qualquer popup aberto
     map.closePopup();
-    
+
     // Limpa a linha clicada anterior
     if (linhaClicada) {
         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
         linhaClicada = null;
     }
-    
+
     Object.keys(ruas).forEach(r => {
         if (r === nome) {
             if (!map.hasLayer(ruas[r])) ruas[r].addTo(map);
             ruas[r].setStyle({ color: "blue", weight: 10, opacity: 0.6 });
-            
+
             // Move o mapa para mostrar a rua selecionada
             map.fitBounds(ruas[r].getBounds(), {
                 padding: [50, 50],
@@ -356,21 +382,30 @@ function selecionarRua(nome) {
             map.removeLayer(ruas[r]);
         }
     });
-    
-    // Colapsa e limpa a searchbox após seleção
+
+    // Mantém o botão X visível e apenas colapsa visualmente
+    setVisible(clearBtn, true);
+
+    // Colapsa a searchbox após delay SEM limpar o conteúdo
     setTimeout(() => {
-        searchInput.value = "";
-        searchInput.blur();
-        clearBtn.style.display = "none";
-        searchContainer.classList.remove("expanded");
-    }, 300); // Pequeno delay para suavizar a transição
+
+    searchInput.blur();
+
+    searchContainer.classList.remove("expanded");
+    
+    searchContainer.classList.remove("has-content");
+
+    setVisible(clearBtn,false);
+
+},300);
 }
 
 clearBtn.onclick = function () {
     searchInput.value = "";
-    this.style.display = "none";
-    suggestionsMenu.style.display = "none";
+    setVisible(this, false);
+    setVisible(suggestionsMenu, false);
     searchContainer.classList.remove("expanded");
+    searchContainer.classList.remove("has-content");
     resetMap();
 };
 
@@ -380,12 +415,12 @@ function resetMap() {
         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
         linhaClicada = null;
     }
-    
+
     Object.keys(ruas).forEach(nome => {
         if (!map.hasLayer(ruas[nome])) ruas[nome].addTo(map);
         ruas[nome].setStyle({ color: "blue", weight: 8, opacity: 0.6 });
     });
-    
+
     map.closePopup();
 }
 

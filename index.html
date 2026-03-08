@@ -20,110 +20,152 @@
             width: 100vw;
         }
 
-        /* Pesquisa */
-        .search-container {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            z-index: 1100;
-            width: 50px;
-            transition: width 0.3s ease;
-        }
+        /* container principal */
 
-        .search-container.expanded {
-            width: 280px;
-        }
+.search-container{
+    position:absolute;
+    top:15px;
+    left:15px;
 
-        #search-button {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: none;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: #555;
-            transition: all 0.3s ease;
-        }
+    z-index:1100;
 
-        #search-button:hover {
-            background: #f5f5f5;
-            color: #1a73e8;
-        }
+    display:flex;
+    align-items:center;
+}
 
-        .search-container.expanded #search-button {
-            display: none;
-        }
+/* lupa */
 
-        #search {
-            width: 100%;
-            padding: 12px 35px 12px 15px;
-            border-radius: 8px;
-            border: none;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            font-size: 16px;
-            box-sizing: border-box;
-            display: none;
-        }
+#search-button{
+    width:50px;
+    height:50px;
 
-        .search-container.expanded #search {
-            display: block;
-        }
+    border-radius:50%;
+    border:none;
 
-        #clear-search {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            font-size: 20px;
-            color: #999;
-            cursor: pointer;
-            display: none;
-            text-align: center;
-            line-height: 24px;
-            border-radius: 50%;
-            transition: all 0.2s;
-        }
+    background:white;
 
-        #clear-search:hover {
-            background-color: #f0f0f0;
-            color: #333;
-        }
+    display:flex;
+    align-items:center;
+    justify-content:center;
 
-        .search-container.expanded #clear-search {
-            display: block;
-        }
+    font-size:18px;
 
-        #suggestions {
-            background: white;
-            border-radius: 0 0 8px 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            display: none;
-        }
+    box-shadow:0 2px 10px rgba(0,0,0,.2);
+
+    cursor:pointer;
+}
+
+/* caixa input + X */
+
+.search-box{
+
+    display:none;
+
+    align-items:center;
+
+    background:white;
+
+    height:50px;
+
+    border-radius:10px;
+
+    box-shadow:0 2px 10px rgba(0,0,0,.2);
+
+    overflow:hidden;
+}
+
+/* quando expandido */
+
+.search-container.expanded .search-box{
+    display:flex;
+}
+
+/* esconder lupa quando aberto */
+
+.search-container.expanded #search-button{
+    display:none;
+}
+
+/* input */
+
+#search{
+
+    border:none;
+    outline:none;
+
+    font-size:16px;
+
+    padding:0 15px;
+
+    width:210px;
+
+    height:100%;
+}
+
+/* clear */
+
+#clear-search{
+
+    width:40px;
+    height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:25px;
+
+    color:#000000;
+
+    cursor:pointer;
+
+    display:none;
+}
+
+/* aparece quando tem texto */
+
+#clear-search.visible{
+    display:flex;
+}
+
+/* sugestões */
+
+#suggestions{
+
+    position:absolute;
+
+    top:55px;
+    left:0;
+
+    width:280px;
+
+    background:white;
+
+    border-radius:10px;
+
+    max-height:200px;
+    overflow-y:auto;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.15);
+
+    display:none;
+}
+
+#suggestions.visible{
+    display:block;
+}
 
         .suggestion-item {
             padding: 12px 15px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
-            font-size: 14px;
         }
 
         .suggestion-item:hover {
-            background-color: #f5f5f5;
+            background: #f5f5f5;
         }
 
-        /* Popup */
-        .popup-container {
-            text-align: center;
-            padding: 8px;
+        .suggestion-item:last-child {
+            border-bottom: none;
         }
 
         .btn-copiar {
@@ -133,8 +175,7 @@
             text-decoration: underline;
             cursor: pointer;
             font-size: 14px;
-            padding: 12px 8px;
-            margin-top: 4px;
+            padding: 12px 10px;
             display: block;
             width: 100%;
             touch-action: manipulation;
@@ -170,16 +211,24 @@
 
 <body>
     <div id="toast-copiado">Copiado!</div>
-    
+
     <div class="search-container">
-        <button id="search-button"><i class="fas fa-search"></i></button>
+
+    <button id="search-button">
+        <i class="fas fa-search"></i>
+    </button>
+
+    <div class="search-box">
         <input id="search" placeholder="Pesquisar..." autocomplete="off">
         <span id="clear-search">&times;</span>
-        <div id="suggestions"></div>
     </div>
-    
+
+    <div id="suggestions"></div>
+
+</div>
+
     <div id="map"></div>
-    
+
     <script src="js/app.js"></script>
 </body>
 
