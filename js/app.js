@@ -299,6 +299,9 @@ function selecionarRua(nome) {
     searchInput.value = nome;
     suggestionsMenu.style.display = "none";
     
+    // Fecha qualquer popup aberto
+    map.closePopup();
+    
     // Limpa a linha clicada anterior
     if (linhaClicada) {
         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
@@ -309,14 +312,24 @@ function selecionarRua(nome) {
         if (r === nome) {
             if (!map.hasLayer(ruas[r])) ruas[r].addTo(map);
             ruas[r].setStyle({ color: "blue", weight: 10, opacity: 0.6 });
-            // REMOVIDO: map.fitBounds(ruas[r].getBounds()); - causava cancelamento do popup
+            
+            // Move o mapa para mostrar a rua selecionada
+            map.fitBounds(ruas[r].getBounds(), {
+                padding: [50, 50],
+                maxZoom: 16
+            });
         } else {
             map.removeLayer(ruas[r]);
         }
     });
     
-    // Mantém expandido com o nome da rua selecionada
-    clearBtn.style.display = "block";
+    // Colapsa e limpa a searchbox após seleção
+    setTimeout(() => {
+        searchInput.value = "";
+        searchInput.blur();
+        clearBtn.style.display = "none";
+        searchContainer.classList.remove("expanded");
+    }, 300); // Pequeno delay para suavizar a transição
 }
 
 clearBtn.onclick = function () {
