@@ -1,0 +1,80 @@
+
+// Procura a tabela pelo ID e muda o limite de visualização para um número alto
+if ($.fn.DataTable.isDataTable('#toponimia')) {
+    $('#toponimia').DataTable().page.len(1000).draw();
+    console.log("A carregar todas as ruas... Aguarda um momento.");
+} else {
+    console.log("Não consegui encontrar a tabela pelo método padrão.");
+}
+
+
+_________________________________________________________________________________
+
+
+
+
+
+(function() {
+    var kmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Toponimia_Ribeira_do_Neiva</name>
+    <Style id="lineStyle">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>4</width>
+      </LineStyle>
+    </Style>`;
+    
+    var kmlFooter = `  </Document>
+</kml>`;
+    
+    var kmlBody = "";
+    var contador = 0;
+
+    var rows = document.querySelectorAll('#toponimia tbody tr');
+
+    rows.forEach(row => {
+        let tds = row.querySelectorAll('td');
+        
+        if (tds.length >= 4) {
+            let nomeRua = tds[1].innerText.trim();
+            let codPostal = tds[2].innerText.trim();
+            let freguesia = tds[3].innerText.trim();
+            
+            let nomeCompleto = `${nomeRua}, ${freguesia}, ${codPostal}`;
+            
+            let link = tds[1].querySelector('a');
+            if (link) {
+                let match = link.getAttribute('onclick').match(/'(\d+)'/);
+                if (match) {
+                    let id = match[1];
+                    let rota = window['route' + id];
+
+                    if (rota && rota.getPath) {
+                        let path = rota.getPath().getArray();
+                        let coords = path.map(p => `${p.lng()},${p.lat()},0`).join(" ");
+                        
+                        kmlBody += `
+    <Placemark>
+      <name>${nomeCompleto}</name>
+      <styleUrl>#lineStyle</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>${coords}</coordinates>
+      </LineString>
+    </Placemark>`;
+                        contador++;
+                    }
+                }
+            }
+        }
+    });
+
+    var kmlFinal = kmlHeader + kmlBody + kmlFooter;
+    copy(kmlFinal);
+    console.log("Extração concluída: " + contador + " ruas.");
+    alert("SUCESSO!\n" + contador + " ruas copiadas com formato: Rua, Freguesia, Código Postal.");
+})();
+
+

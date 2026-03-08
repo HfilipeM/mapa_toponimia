@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Mapa Estafeta Pro</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Pesquisa */
+        .search-container {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 1100;
+            width: 50px;
+            transition: width 0.3s ease;
+        }
+
+        .search-container.expanded {
+            width: 280px;
+        }
+
+        #search-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+
+        #search-button:hover {
+            background: #f5f5f5;
+            color: #1a73e8;
+        }
+
+        .search-container.expanded #search-button {
+            display: none;
+        }
+
+        #search {
+            width: 100%;
+            padding: 12px 35px 12px 15px;
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            box-sizing: border-box;
+            display: none;
+        }
+
+        .search-container.expanded #search {
+            display: block;
+        }
+
+        #clear-search {
+            position: absolute;
+            right: 10px;
+            top: 12px;
+            font-size: 22px;
+            color: #999;
+            cursor: pointer;
+            display: none;
+        }
+
+        .search-container.expanded #clear-search {
+            display: block;
+        }
+
+        #suggestions {
+            background: white;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* Popup */
+        .popup-container {
+            text-align: center;
+            padding: 8px;
+        }
+
+        .btn-copiar {
+            background: none;
+            border: none;
+            color: #1a73e8;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 0;
+            margin-top: 4px;
+            display: block;
+            width: 100%;
+        }
+
+        .btn-copiar:hover {
+            color: #0d47a1;
+        }
+
+        /* Toast */
+        #toast-copiado {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.6);
+            color: black;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-family: sans-serif;
+            pointer-events: none;
+            display: none;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-copiado">Copiado!</div>
+    
+    <div class="search-container">
+        <button id="search-button"><i class="fas fa-search"></i></button>
+        <input id="search" placeholder="Pesquisar..." autocomplete="off">
+        <span id="clear-search">&times;</span>
+        <div id="suggestions"></div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <script src="js/app.js"></script>
+</body>
+
+</html>
