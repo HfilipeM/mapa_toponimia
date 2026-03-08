@@ -53,7 +53,12 @@ const clearBtn = document.getElementById("clear-search");
 const suggestionsMenu = document.getElementById("suggestions");
 
 // Popup único para o mapa todo
-var popupFlutuante = L.popup({ closeButton: false, className: 'popup-container', offset: [0, -10] });
+var popupFlutuante = L.popup({ 
+    closeButton: false, 
+    className: 'popup-container', 
+    offset: [0, -10],
+    autoPan: false // Desativa movimento automático do mapa
+});
 
 // Expandir searchbox ao clicar na lupa
 searchButton.addEventListener("click", function() {
