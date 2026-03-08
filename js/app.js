@@ -85,30 +85,62 @@ function criarConteudoPopup(nome, pontosArray) {
     btn.innerText = "Copiar coordenadas";
     btn.className = "btn-copiar";
 
-    btn.onclick = function (event) {
-        event.stopPropagation(); // Evita fechar o popup ao clicar no botão
+    // Prevenir eventos de toque no botão de propagarem
+    btn.addEventListener('touchstart', function(e) {
+        e.stopPropagation();
+    });
+
+    btn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
         let indiceMeio = Math.floor(pontosArray.length / 2);
         let p = pontosArray[indiceMeio].split(",");
         let coord = p[1] + "," + p[0];
         
-        // Usa navigator.clipboard de forma mais robusta
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(coord).then(() => {
-                mostrarToast("Copiado!");
-            }).catch(err => {
-                console.error("Erro ao copiar:", err);
-                // Fallback: copia manualmente
-                copiarManualmente(coord);
-            });
-        } else {
-            // Fallback para browsers mais antigos
-            copiarManualmente(coord);
-        }
+        copiarCoordenadas(coord);
+    });
+
+    btn.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        let indiceMeio = Math.floor(pontosArray.length / 2);
+        let p = pontosArray[indiceMeio].split(",");
+        let coord = p[1] + "," + p[0];
+        
+        copiarCoordenadas(coord);
     };
 
     container.appendChild(btn);
+    
+    // Prevenir que cliques no container fechem o popup
+    container.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
+    container.addEventListener('touchstart', function(e) {
+        e.stopPropagation();
+    });
+    
     return container;
+}
+
+// Função centralizada para copiar coordenadas
+function copiarCoordenadas(coord) {
+    // Usa navigator.clipboard de forma mais robusta
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(coord).then(() => {
+            mostrarToast("Copiado!");
+        }).catch(err => {
+            console.error("Erro ao copiar:", err);
+            // Fallback: copia manualmente
+            copiarManualmente(coord);
+        });
+    } else {
+        // Fallback para browsers mais antigos
+        copiarManualmente(coord);
+    }
 }
 
 // Função fallback para copiar sem clipboard API
@@ -154,9 +186,13 @@ function carregarKML(url) {
                 // Guarda os pontos no próprio objeto line para evitar problemas de closure
                 line.pontosArray = pontosArray;
                 line.nomeRua = nome;
+                line.touchInProgress = false; // Flag para controlar touch events
 
                 // EVENTO MOUSEOVER - Mostra popup temporário
                 line.on("mouseover", function (e) {
+                    // Ignora mouseover se for touch
+                    if (this.touchInProgress) return;
+                    
                     // Se havia uma linha clicada e não é esta, reseta a anterior
                     if (linhaClicada && linhaClicada !== this) {
                         linhaClicada.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
@@ -172,16 +208,20 @@ function carregarKML(url) {
 
                 // EVENTO MOUSEOUT - Remove popup temporário
                 line.on("mouseout", function (e) {
-                    // Só volta ao estilo normal se não for a linha clicada
-                    if (this !== linhaClicada) {
-                        this.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
-                        map.closePopup();
-                    }
+                    // Ignora mouseout se for touch ou se a linha está clicada
+                    if (this.touchInProgress || this === linhaClicada) return;
+                    
+                    this.setStyle({ color: "blue", weight: 8, opacity: 0.6 });
+                    map.closePopup();
                 });
 
-                // EVENTO CLICK - Fixa o popup
+                // EVENTO CLICK/TAP - Fixa o popup
                 line.on("click", function (e) {
-                    L.DomEvent.stopPropagation(e); // Evita que o click propague para o mapa
+                    L.DomEvent.stopPropagation(e);
+                    
+                    // Marca como touch em progresso
+                    this.touchInProgress = true;
+                    setTimeout(() => { this.touchInProgress = false; }, 500);
                     
                     // Se havia outra linha clicada, volta ao normal
                     if (linhaClicada && linhaClicada !== this) {

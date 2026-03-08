@@ -133,14 +133,20 @@
             text-decoration: underline;
             cursor: pointer;
             font-size: 14px;
-            padding: 4px 0;
+            padding: 12px 8px;
             margin-top: 4px;
             display: block;
             width: 100%;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn-copiar:hover {
             color: #0d47a1;
+        }
+
+        .btn-copiar:active {
+            background-color: #f0f0f0;
         }
 
         /* Toast */
