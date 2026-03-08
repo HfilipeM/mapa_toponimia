@@ -80,17 +80,48 @@ function criarConteudoPopup(nome, pontosArray) {
     btn.innerText = "Copiar coordenadas";
     btn.className = "btn-copiar";
 
-    btn.onclick = function () {
+    btn.onclick = function (event) {
+        event.stopPropagation(); // Evita fechar o popup ao clicar no botão
+        
         let indiceMeio = Math.floor(pontosArray.length / 2);
         let p = pontosArray[indiceMeio].split(",");
         let coord = p[1] + "," + p[0];
-        navigator.clipboard.writeText(coord).then(() => {
-            mostrarToast("Copiado!");
-        });
+        
+        // Usa navigator.clipboard de forma mais robusta
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(coord).then(() => {
+                mostrarToast("Copiado!");
+            }).catch(err => {
+                console.error("Erro ao copiar:", err);
+                // Fallback: copia manualmente
+                copiarManualmente(coord);
+            });
+        } else {
+            // Fallback para browsers mais antigos
+            copiarManualmente(coord);
+        }
     };
 
     container.appendChild(btn);
     return container;
+}
+
+// Função fallback para copiar sem clipboard API
+function copiarManualmente(texto) {
+    const textarea = document.createElement("textarea");
+    textarea.value = texto;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand("copy");
+        mostrarToast("Copiado!");
+    } catch (err) {
+        console.error("Erro ao copiar:", err);
+        mostrarToast("Erro ao copiar");
+    }
+    document.body.removeChild(textarea);
 }
 
 // 5. Função para carregar KML
@@ -273,7 +304,7 @@ function selecionarRua(nome) {
         if (r === nome) {
             if (!map.hasLayer(ruas[r])) ruas[r].addTo(map);
             ruas[r].setStyle({ color: "blue", weight: 10, opacity: 0.6 });
-            map.fitBounds(ruas[r].getBounds());
+            // REMOVIDO: map.fitBounds(ruas[r].getBounds()); - causava cancelamento do popup
         } else {
             map.removeLayer(ruas[r]);
         }
