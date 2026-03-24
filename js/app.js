@@ -32,7 +32,7 @@ var ruas         = {};
 var ruasIndex    = [];
 var linhaClicada = null;
 var camadaAtiva  = 'sat';
-var ruasVisiveis = true;
+var ruasVisiveis = false;
 
 /* ─────────────────────────────────────────────────────
    4. Mapa
@@ -43,7 +43,7 @@ var map = L.map('map', {
     layers: [googleSatCompleto],
     inertiaDeceleration: 3000, tap: false
 });
-minhasRuas.addTo(map);
+// minhasRuas só é adicionado ao mapa quando o utilizador o ativar
 
 /* ─────────────────────────────────────────────────────
    5. Popup reutilizável
@@ -382,10 +382,13 @@ function selecionarRua(nome) {
     if (linhaClicada) { linhaClicada.setStyle(ESTILO_NORMAL); linhaClicada = null; }
     Object.keys(ruas).forEach(function(r) {
         if (r === nome) {
-            if (!map.hasLayer(ruas[r])) ruas[r].addTo(map);
+            if (!minhasRuas.hasLayer(ruas[r])) minhasRuas.addLayer(ruas[r]);
             ruas[r].setStyle(ESTILO_SELECIONADO);
+            minhasRuas.addTo(map);
             map.fitBounds(ruas[r].getBounds(), { padding: [50,50], maxZoom: 16 });
-        } else { map.removeLayer(ruas[r]); }
+        } else {
+            minhasRuas.removeLayer(ruas[r]);
+        }
     });
     setTimeout(function() { searchInput.blur(); }, 300);
 }
@@ -401,21 +404,29 @@ tap(clearBtn, function() {
 
 function resetMapKeepOpen() {
     if (linhaClicada) { linhaClicada.setStyle(ESTILO_NORMAL); linhaClicada = null; }
-    minhasRuas.addTo(map);
-    minhasRuas.eachLayer(function(l) {
-        l.setStyle(ESTILO_NORMAL);
-        if (!map.hasLayer(l)) l.addTo(minhasRuas);
+    Object.keys(ruas).forEach(function(r) {
+        ruas[r].setStyle(ESTILO_NORMAL);
+        if (!minhasRuas.hasLayer(ruas[r])) minhasRuas.addLayer(ruas[r]);
     });
+    if (ruasVisiveis) {
+        minhasRuas.addTo(map);
+    } else {
+        map.removeLayer(minhasRuas);
+    }
     map.closePopup();
 }
 
 function resetMap() {
     if (linhaClicada) { linhaClicada.setStyle(ESTILO_NORMAL); linhaClicada = null; }
-    minhasRuas.addTo(map);
-    minhasRuas.eachLayer(function(l) {
-        l.setStyle(ESTILO_NORMAL);
-        if (!map.hasLayer(l)) l.addTo(minhasRuas);
+    Object.keys(ruas).forEach(function(r) {
+        ruas[r].setStyle(ESTILO_NORMAL);
+        if (!minhasRuas.hasLayer(ruas[r])) minhasRuas.addLayer(ruas[r]);
     });
+    if (ruasVisiveis) {
+        minhasRuas.addTo(map);
+    } else {
+        map.removeLayer(minhasRuas);
+    }
     map.closePopup();
     searchInput.value = '';
     setVisible(clearBtn, false); setVisible(suggestionsMenu, false);
